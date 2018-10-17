@@ -4,6 +4,6 @@ The ITE1806 is divided in two, the Data Communication part where the student lea
 
 The other part of this course is learning about Security, the basic principle and configuration of firewall, security mechanism, encryption and decryption, signature, public and private key. How to protect from threats, handling different types of attack and so on.
 
-I will be using GIT and Github as I work with this course. 
+I will be using GIT and Github as I work through with this course. 
 
 
