@@ -141,11 +141,15 @@ public class Sender {
 
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args)throws Exception{
 
         javaKeyStore();
 
-        File
+        String signedFile = "Sigfile";
+
+        FileOutputStream fos = new FileOutputStream("zipfilesig.zip");
+        ZipOutputStream zos = new ZipOutputStream(fos);
+        writeToZipFile(signedFile ,zos);
 
 
     }
