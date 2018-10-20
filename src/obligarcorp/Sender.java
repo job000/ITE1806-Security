@@ -2,19 +2,18 @@ package obligarcorp;
 import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
+import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 
 public class Sender {
 
-    public static void javaKeyStore(){
+    public static void getKeysFromKeystore()throws Exception{
 
         String ksName = "/Users/johnmichaelobligar/keykeeper.jks";
         char[] pwd = "keykeeper".toCharArray();
 
-        try{
             //Opening the keystore
             KeyStore ks = KeyStore.getInstance("JKS");
             FileInputStream ksfis = new FileInputStream(ksName);
@@ -30,40 +29,24 @@ public class Sender {
             PublicKey pubkey = cert.getPublicKey();
 
             //signing the file.
-            signatureFile(privkey, pubkey);
-
-            //System.out.println(pubkey);
-
+            signatureFile(privkey);
             ksfis.close();
 
-        }catch (KeyStoreException ex){
-            System.err.println("Key Store: "+ex);
-
-        }  catch ( FileNotFoundException ex){
-            System.err.println("File Stream: "+ex);
-
-        }catch (NoSuchAlgorithmException ex){
-            System.err.println("Load: "+ex);
-
-        }catch (CertificateException ex){
-            System.err.println("Load 1: "+ex);
-
-        }catch (IOException e){
-            System.err.println("Load 2: "+e);
-
-        }catch (UnrecoverableKeyException e){
-            System.err.println("Private Key: "+e);
-        }
+        /* save the public key into file */
+        byte[] key = pubkey.getEncoded();
+        FileOutputStream keyfos = new FileOutputStream("jmpk");
+        keyfos.write(key);
+        keyfos.close();
     }
 
-    public static void signatureFile(PrivateKey priv, PublicKey pub){
+    //There is no
+    public static void signatureFile(PrivateKey privkey) throws Exception{
 
-        try {
 
             File file = new File("/Users/johnmichaelobligar/Documents/ITE1806-Security/test.txt");
 
                 Signature dsa = Signature.getInstance("SHA1withRSA");
-                dsa.initSign(priv);
+                dsa.initSign(privkey);
 
             if (file.exists()) {
 
@@ -88,69 +71,67 @@ public class Sender {
 
                 sigfos.close();
 
-                /* save the public key into file */
-                byte[] key = pub.getEncoded();
-                FileOutputStream keyfos = new FileOutputStream("jmpk");
-                keyfos.write(key);
-                keyfos.close();
-
-                //Method that writes the file with signature into a file that is ready to send.
-                //writeToFile(realSig);
-
             }else{
                 System.err.println("File does not exist.. Please Check the File Path!");
             }
 
-            }catch(NoSuchAlgorithmException e){
-                System.err.println("Error in line: Signature dsa = Signature.getInstance(\"SHA1withthRSA\"): " + e);
-
-            }catch(InvalidKeyException e){
-                System.err.println("initSign error: " + e);
-            }catch(FileNotFoundException e){
-                System.err.println("FileInputStream error: " + e);
-            }catch(IOException e){
-                System.err.println("While loop bufin.available() error: " + e);
-            }catch(SignatureException e){
-                System.err.println("dsa.update() error: " + e);
-            }
     }
 
 
-    public static void writeToZipFile( String path, ZipOutputStream zipStream)throws Exception{
+    public static void writeToZipFile( String signedfile, String document, String zipFile)throws Exception{
 
 
-         System.out.println("Writing file : '" + path + "' to zip file");
+         System.out.println("Writing file : '" + signedfile +" and "+ document + "' to zip file");
 
-             File aFile = new File(path);
+         String[] srcFiles = {signedfile, document};
 
-             FileInputStream fis = new FileInputStream(aFile);
 
-             ZipEntry zipSigned = new ZipEntry(path);
-             zipStream.putNextEntry(zipSigned);
+        byte[] bytes = new byte[1024];
 
-             byte[] bytes = new byte[1024];
-             int length;
+        FileOutputStream fos = new FileOutputStream(zipFile);
+        ZipOutputStream zos = new ZipOutputStream(fos);
 
-             while ((length = fis.read(bytes)) >= 0) {
 
-                 zipStream.write(bytes, 0, length);
+             for (int i = 0;i<srcFiles.length; i++) {
+
+                 File srcFile = new File(srcFiles[i]);
+                 FileInputStream fis = new FileInputStream(srcFile);
+
+                 /*Writing into file.*/
+
+                 zos.putNextEntry(new ZipEntry(srcFile.getName()));
+
+                 int length;
+
+                 while ((length = fis.read(bytes)) >= 0) {
+                     zos.write(bytes, 0, length);
+                 }
+
+                 zos.closeEntry();
+
+                 //Close InputStream
+                 fis.close();
              }
-             zipStream.closeEntry();
 
-             fis.close();
+             //Close ZipOutputStream
+             zos.close();
+
 
     }
 
     public static void main(String[] args)throws Exception{
 
-        javaKeyStore();
+        getKeysFromKeystore();
 
-        String signedFile = "Sigfile";
+        String signedfile = "Sigfile";
+        String document = "/Users/johnmichaelobligar/Documents/ITE1806-Security/test.txt";
 
-        FileOutputStream fos = new FileOutputStream("zipfilesig.zip");
-        ZipOutputStream zos = new ZipOutputStream(fos);
-        writeToZipFile(signedFile ,zos);
+        //Naming the zipfile:
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Please enter a zipfile name: ");
+        String zipFileName = sc.nextLine()+".zip";
 
+        writeToZipFile(signedfile,document,zipFileName);
 
     }
 }
